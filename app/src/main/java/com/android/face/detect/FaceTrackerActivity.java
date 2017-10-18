@@ -23,10 +23,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.RequiresApi;
@@ -52,16 +50,12 @@ import com.android.face.detect.model.FaceInfo;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.Tracker;
-import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 import com.android.face.detect.ui.camera.CameraSourcePreview;
 import com.android.face.detect.ui.camera.GraphicOverlay;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -81,11 +75,9 @@ public final class FaceTrackerActivity extends AppCompatActivity {
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
 
-    private ImageView imageView;
-    private boolean safeToTakePicture = false;
-    private int screenWidth, screenHeight;
-
-    private Handler handler = new Handler(Looper.getMainLooper());
+    private ImageView mImageView;
+    private boolean isEnableApiServer =false;
+    private Handler mHandler = new Handler(Looper.getMainLooper());
     //==============================================================================================
     // Activity Methods
     //==============================================================================================
@@ -104,8 +96,8 @@ public final class FaceTrackerActivity extends AppCompatActivity {
             @Override
             public void onResult(AccessToken result) {
                 Log.i("wtf", "AccessToken->" + result.getAccessToken());
-
-                handler.post(new Runnable() {
+                isEnableApiServer = true;
+                mHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         Toast.makeText(FaceTrackerActivity.this, "启动成功", Toast.LENGTH_LONG).show();
@@ -124,13 +116,11 @@ public final class FaceTrackerActivity extends AppCompatActivity {
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
-        imageView = (ImageView) findViewById(R.id.imageView);
+        mImageView = (ImageView) findViewById(R.id.imageView);
 
 
         DisplayMetrics displaymetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        screenWidth = displaymetrics.widthPixels;
-        screenHeight = displaymetrics.heightPixels;
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
         int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
@@ -373,7 +363,7 @@ public final class FaceTrackerActivity extends AppCompatActivity {
             mOverlay.add(mFaceGraphic);
             mFaceGraphic.updateFace(faceInfo);
             getName(faceInfo);
-//            imageView.setImageBitmap(faceInfo.getFaceImage());
+//            mImageView.setImageBitmap(faceInfo.getFaceImage());
 //            takeAPicture(face.getPosition().x, face.getPosition().y, face.getWidth(), face.getHeight());
         }
 
@@ -397,11 +387,22 @@ public final class FaceTrackerActivity extends AppCompatActivity {
         }
 
         private void getName(final FaceInfo faceInfo) {
-            long start = System.currentTimeMillis();
+            if(!isEnableApiServer) {
+                return;
+            }
+
             final Bitmap face = faceInfo.getFaceImage();
             if(face == null) {
                 return;
             }
+
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    mImageView.setImageBitmap(faceInfo.getFaceImage());
+                }
+
+            });
+
 
             try {
                 File file = File.createTempFile(UUID.randomUUID().toString() + "", ".jpg");
@@ -412,7 +413,7 @@ public final class FaceTrackerActivity extends AppCompatActivity {
 
 
                         if (result == null) {
-                            faceInfo.setName("nullFace");
+                            faceInfo.setName("Not Found User");
                             mFaceGraphic.updateFace(faceInfo);
                             return;
                         }

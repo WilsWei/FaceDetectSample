@@ -73,7 +73,7 @@ class MyFaceDetector extends Detector<FaceInfo> {
 
             Bitmap resizedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
 
-            if (resizedBitmap != null && (face.getPosition().x + face.getWidth() < resizedBitmap.getWidth() && face.getPosition().y + face.getHeight() < resizedBitmap.getHeight())){
+            if (resizedBitmap != null && (int) face.getPosition().x >= 0 && (int) face.getPosition().y >= 0 && (face.getPosition().x + face.getWidth() <= resizedBitmap.getWidth() && face.getPosition().y + face.getHeight() <= resizedBitmap.getHeight())){
                 Bitmap faceBitmap = Bitmap.createBitmap(resizedBitmap, (int) face.getPosition().x, (int) face.getPosition().y, (int) face.getWidth(), (int) face.getHeight());
 //                saveImage(faceBitmap, String.valueOf(face.getId()));
 
