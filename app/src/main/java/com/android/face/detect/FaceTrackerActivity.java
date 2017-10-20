@@ -31,6 +31,7 @@ import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -53,6 +54,7 @@ import com.google.android.gms.vision.Tracker;
 import com.google.android.gms.vision.face.FaceDetector;
 import com.android.face.detect.ui.camera.CameraSourcePreview;
 import com.android.face.detect.ui.camera.GraphicOverlay;
+import com.google.android.gms.vision.text.Text;
 
 import java.io.File;
 import java.io.IOException;
@@ -387,12 +389,12 @@ public final class FaceTrackerActivity extends AppCompatActivity {
         }
 
         private void getName(final FaceInfo faceInfo) {
-            if(!isEnableApiServer) {
+            if(!isEnableApiServer || faceInfo.isCallAPILock()) {
                 return;
             }
 
             final Bitmap face = faceInfo.getFaceImage();
-            if(face == null) {
+            if(face == null || !TextUtils.isEmpty(faceInfo.getName())) {
                 return;
             }
 
@@ -407,24 +409,27 @@ public final class FaceTrackerActivity extends AppCompatActivity {
             try {
                 File file = File.createTempFile(UUID.randomUUID().toString() + "", ".jpg");
                 ImageUtil.resize(face, file, 200, 200);
+                faceInfo.setCallAPILock(true);
                 APIService.getInstance().identify(new OnResultListener<FaceModel>() {
                     @Override
                     public void onResult(FaceModel result) {
 
 
                         if (result == null) {
-                            faceInfo.setName("Not Found User");
+//                            faceInfo.setName("Not Found User");
                             mFaceGraphic.updateFace(faceInfo);
                             return;
                         }
 
                         Log.d("xx", "onResult" + result.getUserInfo() + " - " + result.getScore());
-                        if (result.getScore() < 80) {
+//                        if (result.getScore() < 80) {
                             String text = String.format(Locale.ENGLISH, "%s%.2f",
                                     result.getUserInfo(), result.getScore());
                             faceInfo.setName(text);
 //                            shouldUpload = true;
-                        }
+//                        }
+                        mFaceGraphic.updateFace(faceInfo);
+                        faceInfo.setCallAPILock(false);
                     }
 
                     @Override

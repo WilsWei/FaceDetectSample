@@ -14,6 +14,11 @@ public class FaceInfo {
     private Face face;
     private Bitmap faceImage;
     private String name;
+    private boolean callAPILock = false;
+
+    public FaceInfo() {
+        callAPILock = false;
+    }
 
     public Face getFace() {
         return face;
@@ -37,5 +42,13 @@ public class FaceInfo {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isCallAPILock() {
+        return callAPILock;
+    }
+
+    public void setCallAPILock(boolean callAPILock) {
+        this.callAPILock = callAPILock;
     }
 }
